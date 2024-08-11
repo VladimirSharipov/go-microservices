@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: go-microservice
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+  app:
+    build: .
+    networks:
+      - app-network
+   
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq2:5672/
+      - RABBITMQ_QUEUE=tasks_queue
+    command: go run main.go
+
+  rabbitmq1:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - app-network
+    volumes:
+      - rabbitmq1-data:/var/lib/rabbitmq
+
+
+volumes:
+  rabbitmq1-data:
+
+
+networks:
+  app-network:
+    driver: bridge
